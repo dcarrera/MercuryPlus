@@ -484,6 +484,7 @@ c Check for ejections
      %    s,stat,id,opt,ejflag,outfile(3),mem,lmem)
 c
 c Remove lost objects, reset flags and recompute Hill and physical radii
+c ajm 2013-03-19 and end integration if opt(1) is set
         if (ejflag.ne.0) then
           call mxx_elim (nbod,nbig,m,xh,vh,s,rho,rceh,rcrit,ngf,stat,
      %      id,mem,lmem,outfile(3),itmp)
@@ -491,9 +492,17 @@ c Remove lost objects, reset flags and recompute Hill and physical radii
           if (opflag.ge.0) opflag = 1
           call mce_init (tstart,algor,h0,jcen,rcen,rmax,cefac,nbod,nbig,
      %      m,xh,vh,s,rho,rceh,rphys,rce,rcrit,id,opt,outfile(2),0)
+          if (opt(1).ne.0) then
+ 20          open (23, file=outfile(3), status='old', access='append',
+     %            err=20)
+             write(23,'(a)') mem(133)(1:lmem(133))
+             close (23)
+             return
+          end if
         end if
         tfun = time
       end if
+c ajm end edit
 c
 c Go on to the next time step
       goto 100
@@ -766,6 +775,7 @@ c Check for ejections
      %    vh,s,stat,id,opt,ejflag,outfile(3),mem,lmem)
 c
 c Remove ejected objects, reset flags, calculate new Hill and physical radii
+c ajm 2013-03-19 and end integration if opt(1) is set
         if (ejflag.ne.0) then
           call mxx_elim (nbod,nbig,m,xh,vh,s,rho,rceh,rcrit,ngf,stat,
      %      id,mem,lmem,outfile(3),itmp)
@@ -773,6 +783,13 @@ c Remove ejected objects, reset flags, calculate new Hill and physical radii
           dtflag = 1
           call mce_init (tstart,algor,h0,jcen,rcen,rmax,cefac,nbod,nbig,
      %      m,xh,vh,s,rho,rceh,rphys,rce,rcrit,id,opt,outfile(2),0)
+          if (opt(1).ne.0) then
+ 20          open (23, file=outfile(3), status='old', access='append',
+     %            err=20)
+             write(23,'(a)') mem(133)(1:lmem(133))
+             close (23)
+             return
+          end if
           if (algor.eq.1) then
             call mco_iden (time,jcen,nbod,nbig,h0,m,xh,vh,x,v,ngf,
      %        ngflag,opt)
@@ -783,6 +800,7 @@ c Remove ejected objects, reset flags, calculate new Hill and physical radii
         end if
         tfun = time
       end if
+c ajm end edit
 c
 c Go on to the next time step
       goto 100
@@ -935,13 +953,13 @@ c If inside the central body, or passing through pericentre, use 2-body approx.
           e = sqrt( max(temp,0.d0) )
           q = p / (1.d0 + e)
 c
+c ajm 2012-05-28 edited this to check that collision
+c occurs within the timestep
+c ajm secundum andrew shannon 2014-08-28 
+c added abs() to catch some leakers 
 c If the object hit the central body
           if (q.le.rcen) then
-            nhit = nhit + 1
-            jhit(nhit) = j
-            dhit(nhit) = rcen
-c
-c Time of impact relative to the end of the timestep
+c     Time of impact relative to the end of the timestep
             if (e.lt.1) then
               a = q / (1.d0 - e)
               uhit = sign (acos((1.d0 - rcen/a)/e), -h)
@@ -956,8 +974,14 @@ c Time of impact relative to the end of the timestep
               m0   = mod (u0   - e*sinh(u0)   + PI, TWOPI) - PI
             end if
             mm = sqrt((mcen + m(j)) / (a*a*a))
-            thit(nhit) = (mhit - m0) / mm + time
-          end if
+            if (abs((mhit-m0)/mm).le.abs(h)) then
+               nhit = nhit + 1
+               jhit(nhit) = j
+               dhit(nhit) = rcen
+               thit(nhit) = (mhit - m0) / mm + time
+            endif
+         end if
+c ajm end edit
         end if
       end do
 c
