@@ -3692,7 +3692,11 @@ c Return data for the close-encounter objects to global arrays
         s(3,j) = sbs(3,k)
         stat(j) = statbs(k)
       end do
-      do k = 1, nclo
+c
+c dcarrera 2014-10-29
+c          Replace nclo -> min(nclo,CMAX) to avoid segmentation faults.
+c
+      do k = 1, min(nclo,CMAX)
         iclo(k) = index(iclo(k))
         jclo(k) = index(jclo(k))
       end do
@@ -5138,7 +5142,11 @@ c Scaling factor (maximum possible range) for distances
       rfac = log10 (rmax / rcen)
 c
 c Store details of each new close-encounter minimum
-      do k = 1, nclo
+c
+c dcarrera 2014-10-29
+c          Replace nclo -> min(nclo,CMAX) to avoid overflow errors.
+c
+      do k = 1, min(nclo,CMAX)
         nstored = nstored + 1
         c(nstored)(1:8)   = mio_fl2c(tclo(k))
         c(nstored)(9:16)  = mio_re2c(dble(iclo(k)-1),0.d0,11239423.99d0)
