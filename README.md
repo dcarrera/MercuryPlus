@@ -33,4 +33,4 @@ Start by looking at the manual contained in mercury6.man
 compressed output from mercury into coordinates or orbital
 elements for each object.
 - close6.for contains source code for a programme to provide
-details on close encounters during an integration
+details on close encounters during an integration.
