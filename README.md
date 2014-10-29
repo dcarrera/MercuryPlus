@@ -28,9 +28,9 @@ The following files should be present:
 
 Start by looking at the manual contained in mercury6.man
 
-mercury6_2.for contains the source code for the integrator.
-element6.for contains source code for a programme to turn
-  compressed output from mercury into coordinates or orbital
-  elements for each object.
-close6.for contains source code for a programme to provide
-  details on close encounters during an integration
+- mercury6_2.for contains the source code for the integrator.
+- element6.for contains source code for a programme to turn
+compressed output from mercury into coordinates or orbital
+elements for each object.
+- close6.for contains source code for a programme to provide
+details on close encounters during an integration
