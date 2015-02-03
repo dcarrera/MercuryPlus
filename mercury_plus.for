@@ -1768,7 +1768,12 @@ c
       if (x.ge.1.d0) then
         mco_acsh = log (x + sqrt(x*x - 1.d0))
       else
-        mco_acsh = 0.d0
+        write (*,*) 'INPUT: ',x
+c
+c dcarrera 2015-02-03 Write an error in info.out when the input is invalid.
+c
+        call mio_err (6,' ',1,'ERROR: ',7,
+     %  'Domain error. Input to mco_acsh was less than 1.',49,' ',1)
       end if
 c
 c------------------------------------------------------------------------------
