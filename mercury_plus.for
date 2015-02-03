@@ -10,7 +10,7 @@ c Mercury is a general-purpose N-body integration package for problems in
 c celestial mechanics.
 c
 c------------------------------------------------------------------------------
-c This package contains some subroutines taken from the Swift integration 
+c This package contains some subroutines taken from the Swift integration
 c package by H.F.Levison and M.J.Duncan (1994) Icarus, vol 108, pp18.
 c Routines taken from Swift have names beginning with `drift' or `orbel'.
 c
@@ -190,9 +190,9 @@ c Calculate and record the overall change in energy and ang. momentum
       write (23,'(/,a)') mem(57)(1:lmem(57))
       call mxx_en (jcen,nbod,nbig,m,xh,vh,s,en(2),am(2))
 c
-      write (23,231) mem(58)(1:lmem(58)), 
+      write (23,231) mem(58)(1:lmem(58)),
      %  abs((en(2) + en(3) - en(1)) / en(1))
-      write (23,232) mem(59)(1:lmem(59)), 
+      write (23,232) mem(59)(1:lmem(59)),
      %  abs((am(2) + am(3) - am(1)) / am(1))
       write (23,231) mem(60)(1:lmem(60)), abs(en(3) / en(1))
       write (23,232) mem(61)(1:lmem(61)), abs(am(3) / am(1))
@@ -851,7 +851,7 @@ c
 c If velocity changes sign, do an interpolation
         if ((v0(1,j).lt.0.and.v1(1,j).gt.0).or.
      %      (v0(1,j).gt.0.and.v1(1,j).lt.0)) then
-          temp = (v0(1,j)*x1(1,j) - v1(1,j)*x0(1,j) 
+          temp = (v0(1,j)*x1(1,j) - v1(1,j)*x0(1,j)
      %            - .5d0*h*v0(1,j)*v1(1,j)) / (v0(1,j) - v1(1,j))
           xmin(j) = min (xmin(j),temp)
           xmax(j) = max (xmax(j),temp)
@@ -859,7 +859,7 @@ c If velocity changes sign, do an interpolation
 c
         if ((v0(2,j).lt.0.and.v1(2,j).gt.0).or.
      %      (v0(2,j).gt.0.and.v1(2,j).lt.0)) then
-          temp = (v0(2,j)*x1(2,j) - v1(2,j)*x0(2,j) 
+          temp = (v0(2,j)*x1(2,j) - v1(2,j)*x0(2,j)
      %            - .5d0*h*v0(2,j)*v1(2,j)) / (v0(2,j) - v1(2,j))
           ymin(j) = min (ymin(j),temp)
           ymax(j) = max (ymax(j),temp)
@@ -880,7 +880,7 @@ c
 c Author: John E. Chambers
 c
 c Checks all objects with index I >= I0, to see if they have had a collision
-c with the central body in a time interval H, when given the initial and 
+c with the central body in a time interval H, when given the initial and
 c final coordinates and velocities. The routine uses cubic interpolation
 c to estimate the minimum separations.
 c
@@ -1255,7 +1255,7 @@ c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% c
 c Author: John E. Chambers
 c
-c Merges objects I and J inelastically to produce a single new body by 
+c Merges objects I and J inelastically to produce a single new body by
 c conserving mass and linear momentum.
 c   If J <= NBIG, then J is a Big body
 c   If J >  NBIG, then J is a Small body
@@ -1460,11 +1460,11 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: John E. Chambers
 c
-c Given initial and final coordinates and velocities X and V, and a timestep 
+c Given initial and final coordinates and velocities X and V, and a timestep
 c H, the routine estimates which objects were involved in a close encounter
 c during the timestep. The routine examines all objects with indices I >= I0.
 c
-c Returns an array CE, which for each object is: 
+c Returns an array CE, which for each object is:
 c                           0 if it will undergo no encounters
 c                           2 if it will pass within RCRIT of a Big body
 c
@@ -1581,7 +1581,7 @@ c  ICLO, JCLO contain the indices of the objects
 c  DCLO is their minimum separation
 c  TCLO is the time of closest approach relative to current time
 c
-c The routine also checks for collisions/near misses given the physical radii 
+c The routine also checks for collisions/near misses given the physical radii
 c RPHYS, and returns the time THIT of the collision/near miss closest to the
 c start of the timestep, and the identities IHIT and JHIT of the objects
 c involved.
@@ -3027,8 +3027,8 @@ c
 c Author: John E. Chambers
 c
 c Integrates NBOD bodies (of which NBIG are Big) for one timestep H0
-c using the Bulirsch-Stoer method. The accelerations are calculated using the 
-c subroutine FORCE. The accuracy of the step is approximately determined 
+c using the Bulirsch-Stoer method. The accelerations are calculated using the
+c subroutine FORCE. The accuracy of the step is approximately determined
 c by the tolerance parameter TOL.
 c
 c N.B. Input/output must be in coordinates with respect to the central body.
@@ -3217,8 +3217,8 @@ c
 c Author: John E. Chambers
 c
 c Integrates NBOD bodies (of which NBIG are Big) for one timestep H0
-c using the Bulirsch-Stoer method. The accelerations are calculated using the 
-c subroutine FORCE. The accuracy of the step is approximately determined 
+c using the Bulirsch-Stoer method. The accelerations are calculated using the
+c subroutine FORCE. The accuracy of the step is approximately determined
 c by the tolerance parameter TOL.
 c
 c N.B. This version only works for conservative systems (i.e. force is a
@@ -3404,7 +3404,7 @@ c
 c Integrates NBOD bodies (of which NBIG are Big) for one timestep H
 c using a second-order hybrid-symplectic integrator algorithm
 c
-c DTFLAG = 0 implies first ever call to this subroutine, 
+c DTFLAG = 0 implies first ever call to this subroutine,
 c        = 1 implies first call since number/masses of objects changed.
 c        = 2 normal call
 c
@@ -3722,7 +3722,7 @@ c
 c Integrates NBOD bodies (of which NBIG are Big) for one timestep H
 c using a second-order mixed-variable symplectic integrator.
 c
-c DTFLAG = 0 implies first ever call to this subroutine, 
+c DTFLAG = 0 implies first ever call to this subroutine,
 c        = 1 implies first call since number/masses of objects changed.
 c        = 2 normal call
 c
@@ -3841,17 +3841,17 @@ c Author: John E. Chambers
 c
 c Integrates NBOD bodies (of which NBIG are Big) for one timestep H0 using
 c Everhart's RA15 integrator algorithm. The accelerations are calculated
-c using the subroutine FORCE. The accuracy of the step is approximately 
+c using the subroutine FORCE. The accuracy of the step is approximately
 c determined by the tolerance parameter TOL.
 c
 c Based on RADAU by E. Everhart, Physics Department, University of Denver.
 c Comments giving equation numbers refer to Everhart (1985) ``An Efficient
 c Integrator that Uses Gauss-Radau Spacings'', in The Dynamics of Comets:
 c Their Origin and Evolution, p185-202, eds. A. Carusi & G. B. Valsecchi,
-c pub Reidel. (A listing of the original subroutine is also given in this 
+c pub Reidel. (A listing of the original subroutine is also given in this
 c paper.)
 c
-c DTFLAG = 0 implies first ever call to this subroutine, 
+c DTFLAG = 0 implies first ever call to this subroutine,
 c        = 1 implies first call since number/masses of objects changed.
 c        = 2 normal call
 c
@@ -3885,7 +3885,7 @@ c------------------------------------------------------------------------------
 c
       save h,xc,vc,c,d,r,b,e
 c
-c Gauss-Radau spacings for substeps within a sequence, for the 15th order 
+c Gauss-Radau spacings for substeps within a sequence, for the 15th order
 c integrator. The sum of the H values should be 3.733333333333333
 c
       data h/          0.d0,.0562625605369221d0,.1802406917368924d0,
@@ -4307,7 +4307,7 @@ c due to gravitational perturbations by all the other bodies, except that
 c Small bodies do not interact with one another.
 c
 c The positions and velocities are stored in arrays X, V with the format
-c (x,y,z) and (vx,vy,vz) for each object in succession. The accelerations 
+c (x,y,z) and (vx,vy,vz) for each object in succession. The accelerations
 c are stored in the array A (ax,ay,az).
 c
 c N.B. All coordinates and velocities must be with respect to central body!!!!
@@ -4465,8 +4465,8 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: John E. Chambers
 c
-c Calculates accelerations due to the Interaction part of the Hamiltonian 
-c of a hybrid symplectic integrator for a set of NBOD bodies (NBIG of which 
+c Calculates accelerations due to the Interaction part of the Hamiltonian
+c of a hybrid symplectic integrator for a set of NBOD bodies (NBIG of which
 c are Big), where Small bodies do not interact with one another.
 c
 c------------------------------------------------------------------------------
@@ -4519,7 +4519,7 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: John E. Chambers
 c
-c Calculates accelerations due to the Keplerian part of the Hamiltonian 
+c Calculates accelerations due to the Keplerian part of the Hamiltonian
 c of a hybrid symplectic integrator, when close encounters are taking place,
 c for a set of NBOD bodies (NBIG of which are Big). Note that Small bodies
 c do not interact with one another.
@@ -4801,7 +4801,7 @@ c
       do j = 2, nbod
         r2 = x(1,j)*x(1,j) + x(2,j)*x(2,j) +x(3,j)*x(3,j)
 c
-c Only calculate accelerations if body is close to the Sun (R < 9.36 AU), 
+c Only calculate accelerations if body is close to the Sun (R < 9.36 AU),
 c or if the non-gravitational force parameters are exceptionally large.
         if (r2.lt.88.d0.or.abs(ngf(1,j)).gt.1d-7
      %    .or.abs(ngf(2,j)).gt.1d-7.or.abs(ngf(3,j)).gt.1d-7) then
@@ -5498,10 +5498,10 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: John E. Chambers
 c
-c Converts a (floating point) REAL*8 variable X, into a CHARACTER*8 ASCII 
+c Converts a (floating point) REAL*8 variable X, into a CHARACTER*8 ASCII
 c string, using the new format compression:
 c
-c X is first converted to base 224, and then each base 224 digit is converted 
+c X is first converted to base 224, and then each base 224 digit is converted
 c to an ASCII character, such that 0 -> character 32, 1 -> character 33...
 c and 223 -> character 255.
 c The first 7 characters in the string are used to store the mantissa, and the
@@ -5564,7 +5564,7 @@ c
 c Author: John E. Chambers
 c
 c Reads names, masses, coordinates and velocities of all the bodies,
-c and integration parameters for the MERCURY integrator package. 
+c and integration parameters for the MERCURY integrator package.
 c If DUMPFILE(4) exists, the routine assumes this is a continuation of
 c an old integration, and reads all the data from the dump files instead
 c of the input files.
@@ -5823,7 +5823,7 @@ c Read data style
         end if
 c
 c Read epoch of Big bodies
-        if (j.eq.1) then 
+        if (j.eq.1) then
  125      read (11,'(a150)') string
           if (string(1:1).eq.')') goto 125
           call mio_spl (150,string,nsub,lim)
@@ -6126,7 +6126,7 @@ c
 c Check whether RCEN > RMAX or RMAX/RCEN is very large
       if (rcen.gt.rmax) call mio_err (23,mem(81),lmem(81),mem(105),
      %  lmem(105),' ',1,mem(85),lmem(85))
-      if (rmax/rcen.ge.1.d12) write (23,'(/,2a,/a)') 
+      if (rmax/rcen.ge.1.d12) write (23,'(/,2a,/a)')
      %  mem(121)(1:lmem(121)),mem(106)(1:lmem(106)),mem(85)(1:lmem(85))
       close (23)
       return
@@ -6166,7 +6166,7 @@ c Algorithm for negative Julian day numbers (Julian calendar assumed) by
 c J. E. Chambers.
 c
 c N.B. The output date is with respect to the Julian Calendar on or before
-c ===  4th October 1582, and with respect to the Gregorian Calendar on or 
+c ===  4th October 1582, and with respect to the Gregorian Calendar on or
 c      after 15th October 1582.
 c
 c
@@ -6334,12 +6334,12 @@ c                             kinetic energies. (Note that 0 < fv < 1).
 c  vtheta = polar angle of velocity vector
 c  vphi = azimuthal angle of the velocity vector
 c
-c If this is the first output (OPFLAG = -1), or the first output since the 
-c number of the objects or their masses have changed (OPFLAG = 1), then 
+c If this is the first output (OPFLAG = -1), or the first output since the
+c number of the objects or their masses have changed (OPFLAG = 1), then
 c the names, masses and spin components of all the objects are also output.
 c
 c N.B. Each object's distance must lie between RCEN < R < RMAX
-c ===  
+c ===
 c
 c------------------------------------------------------------------------------
 c
@@ -6470,9 +6470,9 @@ c
 c Author: John E. Chambers
 c
 c Converts a REAL*8 variable X, where XMIN <= X < XMAX, into an ASCII string
-c of 8 characters, using the new format compression: 
+c of 8 characters, using the new format compression:
 c
-c X is first converted to base 224, and then each base 224 digit is converted 
+c X is first converted to base 224, and then each base 224 digit is converted
 c to an ASCII character, such that 0 -> character 32, 1 -> character 33...
 c and 223 -> character 255.
 c
@@ -6523,9 +6523,9 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: John E. Chambers
 c
-c Given a character string STRING, of length LEN bytes, the routine finds 
-c the beginnings and ends of NSUB substrings present in the original, and 
-c delimited by spaces. The positions of the extremes of each substring are 
+c Given a character string STRING, of length LEN bytes, the routine finds
+c the beginnings and ends of NSUB substrings present in the original, and
+c delimited by spaces. The positions of the extremes of each substring are
 c returned in the array DELIMIT.
 c Substrings are those which are separated by spaces or the = symbol.
 c
@@ -6589,7 +6589,7 @@ c
 c Author: John E. Chambers
 c
 c Calculates the distance from the central body of each object with index
-c I >= I0. If this distance exceeds RMAX, the object is flagged for ejection 
+c I >= I0. If this distance exceeds RMAX, the object is flagged for ejection
 c (STAT set to -3). If any object is to be ejected, EJFLAG = 1 on exit,
 c otherwise EJFLAG = 0.
 c
@@ -6684,7 +6684,7 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: John E. Chambers
 c
-c Removes any objects with STAT < 0 (i.e. those that have been flagged for 
+c Removes any objects with STAT < 0 (i.e. those that have been flagged for
 c removal) and reindexes all the appropriate arrays for the remaining objects.
 c
 c------------------------------------------------------------------------------
@@ -6996,7 +6996,7 @@ c
 c Author: John E. Chambers
 c
 c Synchronizes the epochs of NBIG Big bodies (having a common epoch) and
-c NBOD-NBIG Small bodies (possibly having differing epochs), for an 
+c NBOD-NBIG Small bodies (possibly having differing epochs), for an
 c integration using MERCURY.
 c The Small bodies are picked up in order starting with the one with epoch
 c furthest from the time, TSTART, at which the main integration will begin
