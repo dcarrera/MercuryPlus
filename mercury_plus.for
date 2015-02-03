@@ -953,10 +953,15 @@ c If inside the central body, or passing through pericentre, use 2-body approx.
           e = sqrt( max(temp,0.d0) )
           q = p / (1.d0 + e)
 c
-c ajm 2012-05-28 edited this to check that collision
-c occurs within the timestep
-c ajm secundum andrew shannon 2014-08-28 
-c added abs() to catch some leakers 
+c ajm 2012-05-28 edited this to check that collision occurs
+c within the timestep
+c
+c ajm secundum andrew shannon 2014-08-28 added abs() to
+c catch some leakers
+c 
+c dcarrera, ajm 2015-02-02 fixed an error in the calculation
+c of uhit, u0, mhit, m0 for hyperbolic orbits.
+c 
 c If the object hit the central body
           if (q.le.rcen) then
 c     Time of impact relative to the end of the timestep
@@ -968,10 +973,10 @@ c     Time of impact relative to the end of the timestep
               m0   = mod (u0   - e*sin(u0)   + PI, TWOPI) - PI
             else
               a = q / (e - 1.d0)
-              uhit = sign (mco_acsh((1.d0 - rcen/a)/e), -h)
-              u0   = sign (mco_acsh((1.d0 - r0/a  )/e), rv0)
-              mhit = mod (uhit - e*sinh(uhit) + PI, TWOPI) - PI
-              m0   = mod (u0   - e*sinh(u0)   + PI, TWOPI) - PI
+              uhit = sign (mco_acsh((1.d0 + rcen/a)/e), -h)
+              u0   = sign (mco_acsh((1.d0 + r0/a  )/e), rv0)
+              mhit = e*sinh(uhit) - uhit
+              m0   = e*sinh(u0)   - u0
             end if
             mm = sqrt((mcen + m(j)) / (a*a*a))
             if (abs((mhit-m0)/mm).le.abs(h)) then
@@ -6858,7 +6863,7 @@ c
 c
 c------------------------------------------------------------------------------
 c
-      return	
+      return
       end
 c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6917,7 +6922,7 @@ c
 c
 c------------------------------------------------------------------------------
 c
-      return	
+      return
       end
 c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7128,20 +7133,20 @@ c
 c             Input:
 c                 nbod          ==>  number of massive bodies (int scalar)
 c                 mass          ==>  mass of bodies (real array)
-c                 x0,y0,z0         ==>  initial position in jacobi coord 
+c                 x0,y0,z0         ==>  initial position in jacobi coord
 c                                    (real scalar)
-c                 vx0,vy0,vz0      ==>  initial position in jacobi coord 
+c                 vx0,vy0,vz0      ==>  initial position in jacobi coord
 c                                    (real scalar)
 c                 dt0            ==>  time step
 c             Output:
-c                 x0,y0,z0         ==>  final position in jacobi coord 
+c                 x0,y0,z0         ==>  final position in jacobi coord
 c                                       (real scalars)
-c                 vx0,vy0,vz0      ==>  final position in jacobi coord 
+c                 vx0,vy0,vz0      ==>  final position in jacobi coord
 c                                       (real scalars)
 c                 iflg             ==>  integer flag (zero if satisfactory)
 c					      (non-zero if nonconvergence)
 c
-c Authors:  Hal Levison & Martin Duncan  
+c Authors:  Hal Levison & Martin Duncan
 c Date:    2/10/93
 c Last revision: April 6/93 - MD adds dt and keeps dt0 unchanged
 
@@ -7149,7 +7154,7 @@ c Last revision: April 6/93 - MD adds dt and keeps dt0 unchanged
 
       include 'swift.inc'
 
-c...  Inputs Only: 
+c...  Inputs Only:
       real*8 mu,dt0
 
 c...  Inputs and Outputs:
@@ -7169,7 +7174,7 @@ c...  Internals:
       real*8 fchk,s,c
 
 c----
-c...  Executable code 
+c...  Executable code
 
 c...  Set dt = dt0 to be sure timestep is not altered while solving
 c...  for new coords.
@@ -7179,7 +7184,7 @@ c...  for new coords.
         v0s = vx0*vx0 + vy0*vy0 + vz0*vz0
         u = x0*vx0 + y0*vy0 + z0*vz0
         alpha = 2.0*mu/r0 - v0s
-        
+
 	if (alpha.gt.0.d0) then
            a = mu/alpha
            asq = a*a
@@ -7227,7 +7232,7 @@ c...  for new coords.
 	   endif
 
          endif
-             
+
 100      call drift_kepu(dt,r0,mu,alpha,u,fp,c1,c2,c3,iflg)
 
          if(iflg .eq.0) then
@@ -7279,7 +7284,7 @@ c
 
 c...    Inputs
 	real*8 dm,es,ec
-	
+
 c...	Outputs
 	real*8 x,s,c
 
@@ -7312,7 +7317,7 @@ c...    Compute better value for the root using quartic Newton method
         dx = -f/(fp + 0.5*dx*fpp)
         dx = -f/(fp + 0.5*dx*fpp + 0.16666666666666666*dx*dx*fppp)
         x = x + dx
-     
+
 c...  excellent approx. to sin and cos of x for small x.
 	y = x*x
 	s = x*(A0-y*(A1-y*(A2-y*(A3-y*(A4-y)))))/A0
@@ -7335,13 +7340,13 @@ c                 mu            ==>  Reduced mass of system (real scalor)
 c                 alpha         ==>  energy (real scalor)
 c                 u             ==>  angular momentun  (real scalor)
 c             Output:
-c                 fp            ==>  f' from p170  
+c                 fp            ==>  f' from p170
 c                                       (real scalors)
 c                 c1,c2,c3      ==>  c's from p171-172
 c                                       (real scalors)
 c                 iflg          ==>  =0 if converged; !=0 if not
 c
-c Author:  Hal Levison  
+c Author:  Hal Levison
 c Date:    2/3/93
 c Last revision: 2/3/93
 
@@ -7349,7 +7354,7 @@ c Last revision: 2/3/93
 
       include 'swift.inc'
 
-c...  Inputs: 
+c...  Inputs:
       real*8 dt,r0,mu,alpha,u
 
 c...  Outputs:
@@ -7360,10 +7365,10 @@ c...  Internals:
       real*8 s,st,fo,fn
 
 c----
-c...  Executable code 
+c...  Executable code
 
         call drift_kepu_guess(dt,r0,mu,alpha,u,s)
-         
+
         st = s
 c..     store initial guess for possible use later in
 c..     laguerre's method, in case newton's method fails.
@@ -7373,7 +7378,7 @@ c..     laguerre's method, in case newton's method fails.
            call drift_kepu_fchk(dt,r0,mu,alpha,u,st,fo)
            call drift_kepu_fchk(dt,r0,mu,alpha,u,s,fn)
            if(abs(fo).lt.abs(fn)) then
-               s = st 
+               s = st
            endif
            call drift_kepu_lag(s,dt,r0,mu,alpha,u,fp,c1,c2,c3,iflg)
         endif
@@ -7395,17 +7400,17 @@ c                                     (real scalar)
 c                 mu            ==>  Reduced mass of system (real scalar)
 c                 alpha         ==>  Twice the binding energy (real scalar)
 c                 u             ==>  Vel. dot radial vector (real scalar)
-c                 s             ==>  Approx. root of f 
+c                 s             ==>  Approx. root of f
 c             Output:
 c                 f             ==>  function value ( = 0 if O.K.) (integer)
 c
-c Author:  Martin Duncan  
+c Author:  Martin Duncan
 c Date:    March 12/93
 c Last revision: March 12/93
 
       subroutine drift_kepu_fchk(dt,r0,mu,alpha,u,s,f)
 
-c...  Inputs: 
+c...  Inputs:
       real*8 dt,r0,mu,alpha,u,s
 
 c...  Outputs:
@@ -7415,7 +7420,7 @@ c...  Internals:
       real*8  x,c0,c1,c2,c3
 
 c----
-c...  Executable code 
+c...  Executable code
 
         x=s*s*alpha
         call drift_kepu_stumpff(x,c0,c1,c2,c3)
@@ -7441,10 +7446,10 @@ c                 mu            ==>  Reduced mass of system (real scalor)
 c                 alpha         ==>  energy (real scalor)
 c                 u             ==>  angular momentun  (real scalor)
 c             Output:
-c                 s             ==>  initial guess for the value of 
+c                 s             ==>  initial guess for the value of
 c                                    universal variable
 c
-c Author:  Hal Levison & Martin Duncan 
+c Author:  Hal Levison & Martin Duncan
 c Date:    3/12/93
 c Last revision: April 6/93
 c Modified by JEC: 8/6/98
@@ -7453,7 +7458,7 @@ c Modified by JEC: 8/6/98
 
       include 'swift.inc'
 
-c...  Inputs: 
+c...  Inputs:
       real*8 dt,r0,mu,alpha,u
 
 c...  Inputs and Outputs:
@@ -7466,9 +7471,9 @@ c...  Internals:
       real*8 en,ec,e
 
 c----
-c...  Executable code 
+c...  Executable code
 
-        if (alpha.gt.0.0) then 
+        if (alpha.gt.0.0) then
 c...       find initial guess for elliptic motion
 
             if( dt/r0 .le. 0.4)  then
@@ -7517,13 +7522,13 @@ c                 alpha         ==>  energy (real scalor)
 c                 u             ==>  angular momentun  (real scalor)
 c             Output:
 c                 s             ==>  final value of universal variable
-c                 fp            ==>  f' from p170  
+c                 fp            ==>  f' from p170
 c                                       (real scalors)
 c                 c1,c2,c3      ==>  c's from p171-172
 c                                       (real scalors)
 c                 iflgn          ==>  =0 if converged; !=0 if not
 c
-c Author:  Hal Levison  
+c Author:  Hal Levison
 c Date:    2/3/93
 c Last revision: 4/21/93
 
@@ -7531,7 +7536,7 @@ c Last revision: 4/21/93
 
       include 'swift.inc'
 
-c...  Inputs: 
+c...  Inputs:
       real*8 s,dt,r0,mu,alpha,u
 
 c...  Outputs:
@@ -7548,7 +7553,7 @@ c...  Internals:
       parameter(NTMP=NLAG2+1)
 
 c----
-c...  Executable code 
+c...  Executable code
 
 c...    To get close approch needed to take lots of iterations if alpha<0
         if(alpha.lt.0.0) then
@@ -7562,8 +7567,8 @@ c...    start laguere's method
         do nc =0,ncmax
            x = s*s*alpha
            call drift_kepu_stumpff(x,c0,c1,c2,c3)
-           c1 = c1*s 
-           c2 = c2*s*s 
+           c1 = c1*s
+           c2 = c2*s*s
            c3 = c3*s*s*s
            f = r0*c1 + u*c2 + mu*c3 - dt
            fp = r0*c0 + u*c1 + mu*c2
@@ -7575,7 +7580,7 @@ c...    start laguere's method
            fdt = f/dt
 
 c..        quartic convergence
-           if( fdt*fdt.lt.DANBYB*DANBYB) then 
+           if( fdt*fdt.lt.DANBYB*DANBYB) then
              iflg = 0
              return
            endif
@@ -7605,13 +7610,13 @@ c                 alpha         ==>  energy (real scalor)
 c                 u             ==>  angular momentun  (real scalor)
 c             Output:
 c                 s             ==>  final value of universal variable
-c                 fp            ==>  f' from p170  
+c                 fp            ==>  f' from p170
 c                                       (real scalors)
 c                 c1,c2,c3      ==>  c's from p171-172
 c                                       (real scalors)
 c                 iflgn          ==>  =0 if converged; !=0 if not
 c
-c Author:  Hal Levison  
+c Author:  Hal Levison
 c Date:    2/3/93
 c Last revision: 4/21/93
 c Modified by JEC: 31/3/98
@@ -7620,7 +7625,7 @@ c Modified by JEC: 31/3/98
 
       include 'swift.inc'
 
-c...  Inputs: 
+c...  Inputs:
       real*8 s,dt,r0,mu,alpha,u
 
 c...  Outputs:
@@ -7633,14 +7638,14 @@ c...  Internals:
       real*8 f,fpp,fppp,fdt
 
 c----
-c...  Executable code 
+c...  Executable code
 
       do nc=0,6
          s2 = s * s
          x = s2*alpha
          call drift_kepu_stumpff(x,c0,c1,c2,c3)
-         c1 = c1*s 
-         c2 = c2*s2 
+         c1 = c1*s
+         c2 = c2*s2
          c3 = c3*s*s2
          f = r0*c1 + u*c2 + mu*c3 - dt
          fp = r0*c0 + u*c1 + mu*c2
@@ -7653,7 +7658,7 @@ c...  Executable code
          fdt = f/dt
 
 c..      quartic convergence
-         if( fdt*fdt.lt.DANBYB*DANBYB) then 
+         if( fdt*fdt.lt.DANBYB*DANBYB) then
              iflgn = 0
              return
          endif
@@ -7682,17 +7687,17 @@ c                 mu            ==>  Reduced mass of system (real scalar)
 c                 alpha         ==>  Twice the binding energy (real scalar)
 c                 u             ==>  Vel. dot radial vector (real scalar)
 c             Output:
-c                 s             ==>  solution of cubic eqn for the  
+c                 s             ==>  solution of cubic eqn for the
 c                                    universal variable
 c                 iflg          ==>  success flag ( = 0 if O.K.) (integer)
 c
-c Author:  Martin Duncan  
+c Author:  Martin Duncan
 c Date:    March 12/93
 c Last revision: March 12/93
 
       subroutine drift_kepu_p3solve(dt,r0,mu,alpha,u,s,iflg)
 
-c...  Inputs: 
+c...  Inputs:
       real*8 dt,r0,mu,alpha,u
 
 c...  Outputs:
@@ -7703,7 +7708,7 @@ c...  Internals:
       real*8 denom,a0,a1,a2,q,r,sq2,sq,p1,p2
 
 c----
-c...  Executable code 
+c...  Executable code
 
 	denom = (mu - alpha*r0)/6.d0
 	a2 = 0.5*u/denom
@@ -7751,7 +7756,7 @@ c                 x             ==>  argument
 c             Output:
 c                 c0,c1,c2,c3   ==>  c's from p171-172
 c                                       (real scalors)
-c Author:  Hal Levison  
+c Author:  Hal Levison
 c Date:    2/3/93
 c Last revision: 2/3/93
 c Modified by JEC: 31/3/98
@@ -7760,7 +7765,7 @@ c
 
       include 'swift.inc'
 
-c...  Inputs: 
+c...  Inputs:
       real*8 x
 
 c...  Outputs:
@@ -7771,7 +7776,7 @@ c...  Internals:
       real*8 xm,x2,x3,x4,x5,x6
 
 c----
-c...  Executable code 
+c...  Executable code
 
       n = 0
       xm = 0.1
@@ -7815,26 +7820,26 @@ c
 c*************************************************************************
 c                        DRIFT_ONE.F
 c*************************************************************************
-c This subroutine does the danby-type drift for one particle, using 
-c appropriate vbles and redoing a drift if the accuracy is too poor 
+c This subroutine does the danby-type drift for one particle, using
+c appropriate vbles and redoing a drift if the accuracy is too poor
 c (as flagged by the integer iflg).
 c
 c             Input:
 c                 nbod          ==>  number of massive bodies (int scalar)
 c                 mass          ==>  mass of bodies (real array)
-c                 x,y,z         ==>  initial position in jacobi coord 
+c                 x,y,z         ==>  initial position in jacobi coord
 c                                    (real scalar)
-c                 vx,vy,vz      ==>  initial position in jacobi coord 
+c                 vx,vy,vz      ==>  initial position in jacobi coord
 c                                    (real scalar)
 c                 dt            ==>  time step
 c             Output:
-c                 x,y,z         ==>  final position in jacobi coord 
+c                 x,y,z         ==>  final position in jacobi coord
 c                                       (real scalars)
-c                 vx,vy,vz      ==>  final position in jacobi coord 
+c                 vx,vy,vz      ==>  final position in jacobi coord
 c                                       (real scalars)
 c                 iflg          ==>  integer (zero for successful step)
 c
-c Authors:  Hal Levison & Martin Duncan 
+c Authors:  Hal Levison & Martin Duncan
 c Date:    2/10/93
 c Last revision: 2/10/93
 c
@@ -7843,7 +7848,7 @@ c
 
       include 'swift.inc'
 
-c...  Inputs Only: 
+c...  Inputs Only:
       real*8 mu,dt
 
 c...  Inputs and Outputs:
@@ -7852,18 +7857,18 @@ c...  Inputs and Outputs:
 
 c...  Output
 	integer iflg
-	
+
 c...  Internals:
 	integer i
 	real*8 dttmp
 
 c----
-c...  Executable code 
+c...  Executable code
 
            call drift_dan(mu,x,y,z,vx,vy,vz,dt,iflg)
 
 	   if(iflg .ne. 0) then
-	    
+
 	     do i = 1,10
 	       dttmp = dt/10.d0
                call drift_dan(mu,x,y,z,vx,vy,vz,dttmp,iflg)
@@ -7879,7 +7884,7 @@ c
 ***********************************************************************
 c                    ORBEL_FGET.F
 ***********************************************************************
-*     PURPOSE:  Solves Kepler's eqn. for hyperbola using hybrid approach.  
+*     PURPOSE:  Solves Kepler's eqn. for hyperbola using hybrid approach.
 *
 *             Input:
 *                           e ==> eccentricity anomaly. (real scalar)
@@ -7889,8 +7894,8 @@ c                    ORBEL_FGET.F
 *
 *     ALGORITHM: Based on pp. 70-72 of Fitzpatrick's book "Principles of
 *           Cel. Mech. ".  Quartic convergence from Danby's book.
-*     REMARKS: 
-*     AUTHOR: M. Duncan 
+*     REMARKS:
+*     AUTHOR: M. Duncan
 *     DATE WRITTEN: May 11, 1992.
 *     REVISIONS: 2/26/93 hfl
 *     Modified by JEC
@@ -7900,7 +7905,7 @@ c                    ORBEL_FGET.F
 
       include 'swift.inc'
 
-c...  Inputs Only: 
+c...  Inputs Only:
 	real*8 e,capn
 
 c...  Internals:
@@ -7910,12 +7915,12 @@ c...  Internals:
 	PARAMETER (IMAX = 10)
 
 c----
-c...  Executable code 
+c...  Executable code
 
 c Function to solve "Kepler's eqn" for F (here called
-c x) for given e and CAPN. 
+c x) for given e and CAPN.
 
-c  begin with a guess proposed by Danby	
+c  begin with a guess proposed by Danby
 	if( capn .lt. 0.d0) then
 	   tmp = -2.d0*capn/e + 1.8d0
 	   x = -log(tmp)
@@ -7932,9 +7937,9 @@ c  begin with a guess proposed by Danby
 	  ech = e*chx
 	  f = esh - x - capn
 c	  write(6,*) 'i,x,f : ',i,x,f
-	  fp = ech - 1.d0  
-	  fpp = esh 
-	  fppp = ech 
+	  fp = ech - 1.d0
+	  fpp = esh
+	  fppp = ech
 	  dx = -f/fp
 	  dx = -f/(fp + dx*fpp/2.d0)
 	  dx = -f/(fp + dx*fpp/2.d0 + dx*dx*fppp/6.d0)
@@ -7942,9 +7947,9 @@ c	  write(6,*) 'i,x,f : ',i,x,f
 c   If we have converged here there's no point in going on
 	  if(abs(dx) .le. TINY) RETURN
 	  x = orbel_fget
-	enddo	
+	enddo
 
-	write(6,*) 'FGET : RETURNING WITHOUT COMPLETE CONVERGENCE' 
+	write(6,*) 'FGET : RETURNING WITHOUT COMPLETE CONVERGENCE'
 	return
 	end   ! orbel_fget
 c------------------------------------------------------------------
@@ -7952,7 +7957,7 @@ c
 ***********************************************************************
 c                    ORBEL_FHYBRID.F
 ***********************************************************************
-*     PURPOSE:  Solves Kepler's eqn. for hyperbola using hybrid approach.  
+*     PURPOSE:  Solves Kepler's eqn. for hyperbola using hybrid approach.
 *
 *             Input:
 *                           e ==> eccentricity anomaly. (real scalar)
@@ -7960,12 +7965,12 @@ c                    ORBEL_FHYBRID.F
 *             Returns:
 *               orbel_fhybrid ==>  eccentric anomaly. (real scalar)
 *
-*     ALGORITHM: For abs(N) < 0.636*ecc -0.6 , use FLON 
+*     ALGORITHM: For abs(N) < 0.636*ecc -0.6 , use FLON
 *	         For larger N, uses FGET
-*     REMARKS: 
-*     AUTHOR: M. Duncan 
+*     REMARKS:
+*     AUTHOR: M. Duncan
 *     DATE WRITTEN: May 26,1992.
-*     REVISIONS: 
+*     REVISIONS:
 *     REVISIONS: 2/26/93 hfl
 ***********************************************************************
 
@@ -7973,7 +7978,7 @@ c                    ORBEL_FHYBRID.F
 
       include 'swift.inc'
 
-c...  Inputs Only: 
+c...  Inputs Only:
 	real*8 e,n
 
 c...  Internals:
@@ -7981,16 +7986,16 @@ c...  Internals:
         real*8 orbel_flon,orbel_fget
 
 c----
-c...  Executable code 
+c...  Executable code
 
 	abn = n
 	if(n.lt.0.d0) abn = -abn
 
 	if(abn .lt. 0.636d0*e -0.6d0) then
 	  orbel_fhybrid = orbel_flon(e,n)
-	else 
+	else
 	  orbel_fhybrid = orbel_fget(e,n)
-	endif   
+	endif
 
 	return
 	end  ! orbel_fhybrid
@@ -7999,7 +8004,7 @@ c
 ***********************************************************************
 c                    ORBEL_FLON.F
 ***********************************************************************
-*     PURPOSE:  Solves Kepler's eqn. for hyperbola using hybrid approach.  
+*     PURPOSE:  Solves Kepler's eqn. for hyperbola using hybrid approach.
 *
 *             Input:
 *                           e ==> eccentricity anomaly. (real scalar)
@@ -8009,16 +8014,16 @@ c                    ORBEL_FLON.F
 *
 *     ALGORITHM: Uses power series for N in terms of F and Newton,s method
 *     REMARKS: ONLY GOOD FOR LOW VALUES OF N (N < 0.636*e -0.6)
-*     AUTHOR: M. Duncan 
+*     AUTHOR: M. Duncan
 *     DATE WRITTEN: May 26, 1992.
-*     REVISIONS: 
+*     REVISIONS:
 ***********************************************************************
 
 	real*8 function orbel_flon(e,capn)
 
       include 'swift.inc'
 
-c...  Inputs Only: 
+c...  Inputs Only:
 	real*8 e,capn
 
 c...  Internals:
@@ -8036,11 +8041,11 @@ c...  Internals:
 	PARAMETER (b5 = 5.d0*a5, b3 = 3.d0*a3)
 
 c----
-c...  Executable code 
+c...  Executable code
 
 
 c Function to solve "Kepler's eqn" for F (here called
-c x) for given e and CAPN. Only good for smallish CAPN 
+c x) for given e and CAPN. Only good for smallish CAPN
 
 	iflag = 0
 	if( capn .lt. 0.d0) then
@@ -8054,7 +8059,7 @@ c x) for given e and CAPN. Only good for smallish CAPN
 
 c  Set iflag nonzero if capn < 0., in which case solve for -capn
 c  and change the sign of the final answer for F.
-c  Begin with a reasonable guess based on solving the cubic for small F	
+c  Begin with a reasonable guess based on solving the cubic for small F
 
 
 	a = 6.d0*(e-1.d0)/e
@@ -8072,7 +8077,7 @@ c e =1.
 	do i = 1,IMAX
 	  x2 = x*x
 	  f = a0 +x*(a1+x2*(a3+x2*(a5+x2*(a7+x2*(a9+x2*(a11+x2))))))
-	  fp = b1 +x2*(b3+x2*(b5+x2*(b7+x2*(b9+x2*(b11 + 13.d0*x2)))))   
+	  fp = b1 +x2*(b3+x2*(b5+x2*(b7+x2*(b9+x2*(b11 + 13.d0*x2)))))
 	  dx = -f/fp
 c	  write(6,*) 'i,dx,x,f : '
 c	  write(6,432) i,dx,x,f
@@ -8081,15 +8086,15 @@ c	  write(6,432) i,dx,x,f
 c   If we have converged here there's no point in going on
 	  if(abs(dx) .le. TINY) go to 100
 	  x = orbel_flon
-	enddo	
+	enddo
 
-c Abnormal return here - we've gone thru the loop 
+c Abnormal return here - we've gone thru the loop
 c IMAX times without convergence
 	if(iflag .eq. 1) then
 	   orbel_flon = -orbel_flon
 	   capn = -capn
 	endif
-	write(6,*) 'FLON : RETURNING WITHOUT COMPLETE CONVERGENCE' 
+	write(6,*) 'FLON : RETURNING WITHOUT COMPLETE CONVERGENCE'
 	  diff = e*sinh(orbel_flon) - orbel_flon - capn
 	  write(6,*) 'N, F, ecc*sinh(F) - F - N : '
 	  write(6,*) capn,orbel_flon,diff
@@ -8107,7 +8112,7 @@ c
 ***********************************************************************
 c                    ORBEL_ZGET.F
 ***********************************************************************
-*     PURPOSE:  Solves the equivalent of Kepler's eqn. for a parabola 
+*     PURPOSE:  Solves the equivalent of Kepler's eqn. for a parabola
 *          given Q (Fitz. notation.)
 *
 *             Input:
@@ -8117,7 +8122,7 @@ c                    ORBEL_ZGET.F
 *
 *     ALGORITHM: p. 70-72 of Fitzpatrick's book "Princ. of Cel. Mech."
 *     REMARKS: For a parabola we can solve analytically.
-*     AUTHOR: M. Duncan 
+*     AUTHOR: M. Duncan
 *     DATE WRITTEN: May 11, 1992.
 *     REVISIONS: May 27 - corrected it for negative Q and use power
 *	      series for small Q.
@@ -8127,7 +8132,7 @@ c                    ORBEL_ZGET.F
 
       include 'swift.inc'
 
-c...  Inputs Only: 
+c...  Inputs Only:
 	real*8 q
 
 c...  Internals:
@@ -8135,7 +8140,7 @@ c...  Internals:
 	real*8 x,tmp
 
 c----
-c...  Executable code 
+c...  Executable code
 
 	iflag = 0
 	if(q.lt.0.d0) then
@@ -8155,7 +8160,7 @@ c...  Executable code
            orbel_zget = -orbel_zget
 	   q = -q
 	endif
-	
+
 	return
 	end    ! orbel_zget
 c----------------------------------------------------------------------
