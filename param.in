@@ -2,10 +2,12 @@
 ) Lines beginning with `)' are ignored.
 )---------------------------------------------------------------------
 ) Important integration parameters:
+)
+) Integration time: 10 Myr
 )---------------------------------------------------------------------
  algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = hyb
- start time (days)= 2451179.5
- stop time (days) =2462502.5
+ start time (days)= 0.0
+ stop time (days) = 3652500000.0d0
  output interval (days) = 365.25d0
  timestep (days) = 8
  accuracy parameter=1.d-12
@@ -13,10 +15,10 @@
 ) Integration options:
 )---------------------------------------------------------------------
  stop integration after a close encounter = no
- allow collisions to occur = no
+ allow collisions to occur = yes
  include collisional fragmentation = no
  express time in days or years = years
- express time relative to integration start time = no
+ express time relative to integration start time = yes
  output precision = medium
  < not used at present >
  include relativity in integration= no
