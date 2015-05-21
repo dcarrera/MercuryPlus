@@ -13,16 +13,30 @@ c The user specifies the names of the required objects in the file elements.in
 c See subroutine M_FORMAT for the identities of each element in the EL array
 c e.g. el(1)=a, el(2)=e etc.
 c
+c
+c Modified by Dimitri Veras and Alexander James Mustill, 2011-2015
+c 2015-05-20 fixed a Jacobi ordering bug with -ve semimajor axes
+c 2015-02-18 ajm redid input routine so this version works
+c                with the non-mass-loss Mercury versions
+c Modifications:
+c  Jacobi elements are now handled correctly. This means:
+c     (a) big and small bodies are both treated the same way
+c         in particular, small bodies' elements are no longer heliocentric
+c     (b) the correct "stellar mass" is used when converting xv to orb elts
+c         before it was m_star+m_pl, now it adds up all inner planets
+c     (c) the code can now cope with bodies' being reordered by scattering
+c
 c------------------------------------------------------------------------------
 c
       implicit none
       include 'mercury.inc'
 c
-      integer itmp,i,j,k,l,iback(NMAX),precision,lenin
+      integer itmp,i,j,k,l,iback(NMAX),precision,lenin,index
       integer nmaster,nopen,nwait,nbig,nsml,nbod,nsub,lim(2,100)
       integer year,month,timestyle,line_num,lenhead,lmem(NMESS)
       integer nchar,algor,centre,allflag,firstflag,ninfile,nel,iel(22)
       integer nbod1,nbig1,unit(NMAX),code(NMAX),master_unit(NMAX)
+      integer iref(NMAX)
       real*8 time,teval,t0,t1,tprevious,rmax,rcen,rfac,rhocgs,temp
       real*8 mcen,jcen(3),el(22,NMAX),s(3),is(NMAX),ns(NMAX),a(NMAX)
       real*8 mio_c2re, mio_c2fl,fr,theta,phi,fv,vtheta,vphi,gm
@@ -34,6 +48,7 @@ c
       character*5 fin
       character*1 check,style,type,c1
       character*2 c2
+      real*8 aold
 c
 c------------------------------------------------------------------------------
 c
@@ -265,16 +280,18 @@ c------------------------------------------------------------------------------
 c
 c  IF  NORMAL  INPUT,  READ  COMPRESSED  ORBITAL  VARIABLES  FOR  ALL  OBJECTS
 c
-        else if (type.eq.'b') then
+       else if (type.eq.'b') then
           line_num = line_num + 1
           read (10,'(3x,a14)',err=666) cc(1:14)
 c
+          
 c Decompress the time and the number of objects
           time = mio_c2fl (cc(1:8))
           nbig = int(.5d0 + mio_c2re(cc(9:16),  0.d0, 11239424.d0, 3))
           nsml = int(.5d0 + mio_c2re(cc(12:19), 0.d0, 11239424.d0, 3))
           nbod = nbig + nsml
           if (firstflag.eq.0) t0 = time
+
 c
 c Read in strings containing compressed data for each object
           do j = 1, nbod
@@ -312,15 +329,51 @@ c Decompress orbital variables for each object
             el(16,code(j)) = sqrt(x(1,l)*x(1,l) + x(2,l)*x(2,l)
      %                     + x(3,l)*x(3,l))
           end do
+c ajm 2013-10-24 another shot at fixing the Jacobi elements
+c we first calculate heliocentric elements (only a required)
+c and then use those a's to order bodies for Jacobi conversion
 c
+          if (centre.eq.2) then
+c ajm 2015-05-20 reinitialise arrays
+             do j = 1, NMAX
+                a(j)=0.
+                iback(j)=0
+             end do
+             do j = 1, nbod
+                k = code(j)
+                l = j + 1
+                gm = (mcen + el(18,k)) * K2
+                el(10,k)=x(1,l)
+                el(11,k)=x(2,l)
+                el(12,k)=x(3,l)
+                el(13,k)=v(1,l)
+                el(14,k)=v(2,l)
+                el(15,k)=v(3,l)
+                call mco_x2el (gm,el(10,k),el(11,k),el(12,k),el(13,k),
+     %               el(14,k),el(15,k),el(8,k),el(2,k),el(3,k),el(7,k),
+     %               el(5,k),el(6,k))
+                el(1,k) = el(8,k) / (1.d0 - el(2,k))
+             a(j) = el(1,k)
+c ajm 2015-05-20 replace a with r for hyperbolic orbits
+             if (a(j).lt.0) then
+c                aold=a(j)
+                a(j) = sqrt(x(1,l)**2+x(2,l)**2+x(3,l)**2)
+c                write(*,*) time/365.25,j,aold,a(j)
+             endif
+             end do
+c ajm 2013-10-24 now we generate a sort index for the bodies' axes
+             call mxx_sort (nbod,a,iback)
+          endif
 c Convert to barycentric, Jacobi or close-binary coordinates if desired
           nbod1 = nbod + 1
           nbig1 = nbig + 1
           call mco_iden (jcen,nbod1,nbig1,temp,m,x,v,xh,vh)
           if (centre.eq.1) call mco_h2b (jcen,nbod1,nbig1,temp,m,xh,vh,
-     %      x,v)
-          if (centre.eq.2) call mco_h2j (jcen,nbod1,nbig1,temp,m,xh,vh,
-     %      x,v)
+     %         x,v)
+c ajm 2013-10-24 we need to pass iback to mco_h2j to ensure correct Jacobi ordering
+c          write(*,'(3g12.5)') m(1),m(2),m(3)
+          if (centre.eq.2) call mco_h2j (jcen,nbod1,nbig1,temp,m,
+     %         xh,vh,x,v,iback,code,NMAX)
           if (centre.eq.0.and.algor.eq.11) call mco_h2cb (jcen,nbod1,
      %      nbig1,temp,m,xh,vh,x,v)
 c
@@ -336,7 +389,18 @@ c Put Cartesian coordinates into element arrays
             el(15,k) = v(3,l)
 c
 c Convert to Keplerian orbital elements
-            gm = (mcen + el(18,k)) * K2
+c ajm 27-03-12: changed effective mass for Jacobi coordinates
+c to get correct mean motion and orb elts
+c ajm 2013-10-25 further jacobi bugfix
+c to account for bodies' reordering
+            if (centre.eq.0.or.centre.eq.1) gm = (mcen + el(18,k)) * K2
+            if (centre.eq.2) then
+               gm=mcen*K2
+               do index=1,nbod
+                  if (a(index).le.a(k) .and. index.le.nbig) gm = 
+     %                 gm+m(index+1)
+               end do
+            end if
             call mco_x2el (gm,el(10,k),el(11,k),el(12,k),el(13,k),
      %        el(14,k),el(15,k),el(8,k),el(2,k),el(3,k),el(7,k),
      %        el(5,k),el(6,k))
@@ -393,9 +457,11 @@ c------------------------------------------------------------------------------
 c
 c  IF  TYPE  IS  NOT  'a'  OR  'b',  THE  INPUT  FILE  IS  CORRUPTED
 c
-        else
+c ajm 24/05/12 changed if to evaluate here
+c ajm 2015-02-18 reverted change
+       else
           goto 666
-        end if
+       end if
 c
 c Move on to the next time slice
         goto 100
@@ -471,8 +537,10 @@ c Write values of a, e, i and m for surviving objects in an output file
 c
 c------------------------------------------------------------------------------
 c
+c ajm 04/12/12 increased width in "a" field
 c Format statements
- 213  format (1x,a8,1x,f8.4,1x,f7.5,1x,f7.3,1p,e11.4,0p,1x,f6.3,1x,f6.2)
+ 213  format (1x,a8,1x,f10.4,1x,f7.5,1x,f7.3,1p,e11.4,0p,1x,f6.3,
+     %     1x,f6.2)
 c
       end
 c
@@ -1239,71 +1307,75 @@ c
 c Converts coordinates with respect to the central body to Jacobi coordinates.
 c Note that the Jacobi coordinates of all small bodies are assumed to be the
 c same as their coordinates with respect to the central body.
-c
+c ajm 30/03/12 fixed this
+c ajm 2013-10-25 fixed the ordering of all bodies
+c they're now ordered by their heliocentric semi-major axes
 c------------------------------------------------------------------------------
 c
-      subroutine mco_h2j (jcen,nbod,nbig,h,m,xh,vh,x,v)
+      subroutine mco_h2j (jcen,nbod,nbig,h,m,xh,vh,x,v,iback,code,NMAX)
 c
       implicit none
 c
 c Input/Output
-      integer nbod,nbig
-      real*8 jcen(3),h,m(nbig),xh(3,nbig),vh(3,nbig),x(3,nbig),v(3,nbig)
+      integer nbod,nbig,NMAX,iback(NMAX),code(NMAX)
+      real*8 jcen(3),h,m(nbig),xh(3,nbod),vh(3,nbod),x(3,nbod),v(3,nbod)
 c
 c Local
-      integer j
-      real*8 mtot, mx, my, mz, mu, mv, mw, temp
+      integer j,index
+      real*8 mtot, mx, my, mz, mu, mv, mw, temp,mass(nbod)
 c
-c------------------------------------------------------------------------------c
-      mtot = m(2)
-      x(1,2) = xh(1,2)
-      x(2,2) = xh(2,2)
-      x(3,2) = xh(3,2)
-      v(1,2) = vh(1,2)
-      v(2,2) = vh(2,2)
-      v(3,2) = vh(3,2)
-      mx = m(2) * xh(1,2)
-      my = m(2) * xh(2,2)
-      mz = m(2) * xh(3,2)
-      mu = m(2) * vh(1,2)
-      mv = m(2) * vh(2,2)
-      mw = m(2) * vh(3,2)
+c-----------------------------------------------------------------------------c
+      do j=2, nbig
+         mass(j) = m(j)
+      enddo
+      do j=nbig+1,nbod
+         mass(j)=0.d0
+      enddo
+      index = code(iback(1))+1
+c      write (*,'(2i6)') code(iback(2)),code(iback(3))
+c      write (*,'(3g12.5)') m(1),m(index),m(code(iback(3)))
+      mtot = mass(index)
+      x(1,index) = xh(1,index)
+      x(2,index) = xh(2,index)
+      x(3,index) = xh(3,index)
+      v(1,index) = vh(1,index)
+      v(2,index) = vh(2,index)
+      v(3,index) = vh(3,index)
+      mx = mass(index) * xh(1,index)
+      my = mass(index) * xh(2,index)
+      mz = mass(index) * xh(3,index)
+      mu = mass(index) * vh(1,index)
+      mv = mass(index) * vh(2,index)
+      mw = mass(index) * vh(3,index)
 c
-      do j = 3, nbig - 1
+      do j = 2, nbod - 1
         temp = 1.d0 / (mtot + m(1))
-        mtot = mtot + m(j)
-        x(1,j) = xh(1,j)  -  temp * mx
-        x(2,j) = xh(2,j)  -  temp * my
-        x(3,j) = xh(3,j)  -  temp * mz
-        v(1,j) = vh(1,j)  -  temp * mu
-        v(2,j) = vh(2,j)  -  temp * mv
-        v(3,j) = vh(3,j)  -  temp * mw
-        mx = mx  +  m(j) * xh(1,j)
-        my = my  +  m(j) * xh(2,j)
-        mz = mz  +  m(j) * xh(3,j)
-        mu = mu  +  m(j) * vh(1,j)
-        mv = mv  +  m(j) * vh(2,j)
-        mw = mw  +  m(j) * vh(3,j)
+        index = code(iback(j))+1
+        mtot = mtot + mass(index)
+        x(1,index) = xh(1,index)  -  temp * mx
+        x(2,index) = xh(2,index)  -  temp * my
+        x(3,index) = xh(3,index)  -  temp * mz
+        v(1,index) = vh(1,index)  -  temp * mu
+        v(2,index) = vh(2,index)  -  temp * mv
+        v(3,index) = vh(3,index)  -  temp * mw
+        mx = mx  +  mass(index) * xh(1,index)
+        my = my  +  mass(index) * xh(2,index)
+        mz = mz  +  mass(index) * xh(3,index)
+        mu = mu  +  mass(index) * vh(1,index)
+        mv = mv  +  mass(index) * vh(2,index)
+        mw = mw  +  mass(index) * vh(3,index)
       enddo
 c
-      if (nbig.gt.2) then
+      if (nbod.gt.2) then
         temp = 1.d0 / (mtot + m(1))
-        x(1,nbig) = xh(1,nbig)  -  temp * mx
-        x(2,nbig) = xh(2,nbig)  -  temp * my
-        x(3,nbig) = xh(3,nbig)  -  temp * mz
-        v(1,nbig) = vh(1,nbig)  -  temp * mu
-        v(2,nbig) = vh(2,nbig)  -  temp * mv
-        v(3,nbig) = vh(3,nbig)  -  temp * mw
+        index=code(iback(nbod))+1
+        x(1,index) = xh(1,index)  -  temp * mx
+        x(2,index) = xh(2,index)  -  temp * my
+        x(3,index) = xh(3,index)  -  temp * mz
+        v(1,index) = vh(1,index)  -  temp * mu
+        v(2,index) = vh(2,index)  -  temp * mv
+        v(3,index) = vh(3,index)  -  temp * mw
       end if
-c
-      do j = nbig + 1, nbod
-        x(1,j) = xh(1,j)
-        x(2,j) = xh(2,j)
-        x(3,j) = xh(3,j)
-        v(1,j) = vh(1,j)
-        v(2,j) = vh(2,j)
-        v(3,j) = vh(3,j)
-      end do
 c
 c------------------------------------------------------------------------------
 c
